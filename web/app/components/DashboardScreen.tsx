@@ -6,7 +6,7 @@ import type { Snapshot, User } from "../types";
 import GrowthChart from "./GrowthChart";
 import StatCard from "./StatCard";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {

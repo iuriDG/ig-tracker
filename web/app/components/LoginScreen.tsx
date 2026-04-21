@@ -4,7 +4,7 @@ import { useState } from "react";
 import { C, inputStyle } from "../styles";
 import type { User } from "../types";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export default function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
   const [username, setUsername] = useState("");
