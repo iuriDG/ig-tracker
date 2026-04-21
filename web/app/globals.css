@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #07060b;
+  --card: #0B1F6A;
+  --card-dark: #080f35;
+  --blue: #9FB6FF;
+  --purple: #8A73D6;
+  --lavender: #D86BEA;
+  --orange: #F97316;
+  --muted: #7B8AB8;
+  --border: #1a2f7a;
+  --green: #4ade80;
+  --red: #f87171;
+}
+
+body {
+  background: var(--bg);
+  color: #ffffff;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
