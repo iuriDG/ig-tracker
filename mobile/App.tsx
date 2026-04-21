@@ -48,33 +48,71 @@ type Snapshot = {
   taken_at: string;
 };
 
+type AppTab = "dashboard" | "profiles";
+
 export default function App() {
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [tab, setTab] = useState<AppTab>("dashboard");
 
   if (!loggedInUser) return <LoginScreen onLogin={setLoggedInUser} />;
-  return <DashboardScreen user={loggedInUser} onLogout={() => setLoggedInUser(null)} />;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <View style={{ flex: 1 }}>
+        {tab === "dashboard"
+          ? <DashboardScreen user={loggedInUser} onLogout={() => setLoggedInUser(null)} />
+          : <ProfilesScreen user={loggedInUser} onUpdate={setLoggedInUser} />
+        }
+      </View>
+
+      {/* Bottom tab bar */}
+      <View style={styles.tabBar}>
+        {(["dashboard", "profiles"] as AppTab[]).map((t) => (
+          <Pressable key={t} style={styles.tabBarItem} onPress={() => setTab(t)}>
+            <View style={[styles.tabBarDot, tab === t && styles.tabBarDotActive]} />
+            <Text style={[styles.tabBarLabel, tab === t && styles.tabBarLabelActive]}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
 }
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 
+type AuthMode = "signin" | "signup";
+
 function LoginScreen({ onLogin }: { onLogin: (user: User) => void }) {
+  const [mode, setMode] = useState<AuthMode>("signin");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [igId, setIgId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleLogin() {
+  function switchMode(m: AuthMode) {
+    setMode(m);
+    setUsername(""); setPassword(""); setConfirm(""); setIgId(""); setError(null);
+  }
+
+  async function handleSubmit() {
     if (!username.trim() || !password.trim()) return;
+    if (mode === "signup" && password !== confirm) { setError("Passwords don't match"); return; }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BASE_URL}/login`, {
+      const body: Record<string, string> = { username: username.trim(), password: password.trim() };
+      if (mode === "signup" && igId.trim()) body.instagram_user_id = igId.trim();
+      const res = await fetch(`${BASE_URL}/${mode === "signin" ? "login" : "signup"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok) setError(json.error ?? "Login failed");
+      if (!res.ok) setError(json.error ?? "Something went wrong");
       else onLogin(json.user);
     } catch (e: any) {
       setError(e.message);
@@ -90,9 +128,22 @@ function LoginScreen({ onLogin }: { onLogin: (user: User) => void }) {
         <Text style={styles.appTitle}>adnova</Text>
         <Text style={styles.tagline}>SMARTER INSIGHTS · FASTER GROWTH</Text>
 
+        {/* Tab toggle */}
+        <View style={styles.tabRow}>
+          {(["signin", "signup"] as AuthMode[]).map((m) => (
+            <Pressable key={m} style={[styles.tab, mode === m && styles.tabActive]} onPress={() => switchMode(m)}>
+              <Text style={[styles.tabText, mode === m && styles.tabTextActive]}>
+                {m === "signin" ? "Sign In" : "Sign Up"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
         <View style={styles.loginCard}>
-          <Text style={styles.loginHeading}>Welcome back</Text>
-          <Text style={styles.loginSub}>Enter your credentials to continue</Text>
+          <Text style={styles.loginHeading}>{mode === "signin" ? "Welcome back" : "Create account"}</Text>
+          <Text style={styles.loginSub}>
+            {mode === "signin" ? "Enter your credentials to continue" : "Fill in your details to get started"}
+          </Text>
 
           <TextInput
             style={[styles.input, error ? styles.inputError : null]}
@@ -103,6 +154,19 @@ function LoginScreen({ onLogin }: { onLogin: (user: User) => void }) {
             autoCapitalize="none"
             autoCorrect={false}
           />
+
+          {mode === "signup" && (
+            <TextInput
+              style={styles.input}
+              placeholder="instagram user id (optional)"
+              placeholderTextColor={C.muted}
+              value={igId}
+              onChangeText={setIgId}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          )}
+
           <TextInput
             style={[styles.input, error ? styles.inputError : null]}
             placeholder="password"
@@ -111,17 +175,38 @@ function LoginScreen({ onLogin }: { onLogin: (user: User) => void }) {
             onChangeText={(t) => { setPassword(t); setError(null); }}
             secureTextEntry
             autoCapitalize="none"
-            onSubmitEditing={handleLogin}
           />
+
+          {mode === "signup" && (
+            <TextInput
+              style={[styles.input, error ? styles.inputError : null]}
+              placeholder="confirm password"
+              placeholderTextColor={C.muted}
+              value={confirm}
+              onChangeText={(t) => { setConfirm(t); setError(null); }}
+              secureTextEntry
+              autoCapitalize="none"
+              onSubmitEditing={handleSubmit}
+            />
+          )}
+
+          {mode === "signin" && (
+            <View style={{ height: 0 }}>
+              <TextInput onSubmitEditing={handleSubmit} style={{ height: 0, opacity: 0 }} />
+            </View>
+          )}
 
           {error && <Text style={styles.errorText}>{error}</Text>}
 
           <Pressable
             style={({ pressed }) => [styles.loginBtn, pressed && { opacity: 0.8 }]}
-            onPress={handleLogin}
+            onPress={handleSubmit}
             disabled={loading}
           >
-            {loading ? <ActivityIndicator color={C.white} /> : <Text style={styles.loginBtnText}>Log In</Text>}
+            {loading
+              ? <ActivityIndicator color={C.white} />
+              : <Text style={styles.loginBtnText}>{mode === "signin" ? "Log In" : "Create Account"}</Text>
+            }
           </Pressable>
         </View>
       </View>
@@ -359,6 +444,111 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// ─── Profiles ─────────────────────────────────────────────────────────────────
+
+function ProfilesScreen({ user, onUpdate }: { user: User; onUpdate: (u: User) => void }) {
+  const [username, setUsername] = useState(user.username);
+  const [igId, setIgId] = useState(user.instagram_user_id ?? "");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  async function handleSave() {
+    if (password && password !== confirm) { setError("Passwords don't match"); return; }
+    setLoading(true); setError(null);
+    try {
+      const body: Record<string, string> = { username: username.trim(), instagram_user_id: igId.trim() };
+      if (password.trim()) body.password = password.trim();
+      const res = await fetch(`${BASE_URL}/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? "Update failed"); return; }
+      onUpdate(json.user);
+      setPassword(""); setConfirm("");
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <StatusBar barStyle="light-content" />
+        <Text style={[styles.appTitle, { marginBottom: 4 }]}>My Profile</Text>
+        <Text style={[styles.tagline, { marginBottom: 24 }]}>ACCOUNT SETTINGS</Text>
+
+        <View style={styles.profileCard}>
+          <View style={styles.profileHeader}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{user.username[0].toUpperCase()}</Text>
+            </View>
+            <View>
+              <Text style={styles.username}>@{user.username}</Text>
+              {user.instagram_user_id ? (
+                <Text style={[styles.historyDate, { marginTop: 2 }]}>ID: {user.instagram_user_id}</Text>
+              ) : null}
+            </View>
+          </View>
+
+          {success && (
+            <View style={{ backgroundColor: "#14532d", borderRadius: 8, padding: 10, marginBottom: 12 }}>
+              <Text style={{ color: C.green, fontSize: 13 }}>Profile updated successfully.</Text>
+            </View>
+          )}
+
+          <Text style={styles.sectionLabel}>USERNAME</Text>
+          <TextInput
+            style={styles.input} placeholderTextColor={C.muted}
+            value={username} onChangeText={(t) => { setUsername(t); setError(null); }}
+            autoCapitalize="none" autoCorrect={false}
+          />
+
+          <Text style={styles.sectionLabel}>INSTAGRAM USER ID</Text>
+          <TextInput
+            style={styles.input} placeholderTextColor={C.muted}
+            value={igId} onChangeText={setIgId}
+            autoCapitalize="none" autoCorrect={false}
+          />
+
+          <Text style={[styles.sectionLabel, { marginTop: 16 }]}>
+            NEW PASSWORD <Text style={{ fontWeight: "400", fontSize: 10 }}>(leave blank to keep)</Text>
+          </Text>
+          <TextInput
+            style={[styles.input, error && password ? styles.inputError : null]}
+            placeholderTextColor={C.muted} placeholder="new password"
+            value={password} onChangeText={(t) => { setPassword(t); setError(null); }}
+            secureTextEntry autoCapitalize="none"
+          />
+          <TextInput
+            style={[styles.input, error && confirm ? styles.inputError : null]}
+            placeholderTextColor={C.muted} placeholder="confirm password"
+            value={confirm} onChangeText={(t) => { setConfirm(t); setError(null); }}
+            secureTextEntry autoCapitalize="none"
+          />
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          <Pressable
+            style={({ pressed }) => [styles.loginBtn, pressed && { opacity: 0.8 }]}
+            onPress={handleSave} disabled={loading}
+          >
+            {loading ? <ActivityIndicator color={C.white} /> : <Text style={styles.loginBtnText}>Save Changes</Text>}
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -369,9 +559,19 @@ const styles = StyleSheet.create({
   appTitle: { fontSize: 36, fontWeight: "800", color: C.white, letterSpacing: -0.5 },
   tagline: { fontSize: 11, fontWeight: "600", color: C.muted, letterSpacing: 1.5, marginTop: 4 },
 
+  tabRow: {
+    flexDirection: "row", backgroundColor: C.cardDark,
+    borderRadius: 12, padding: 4, marginTop: 32,
+    borderWidth: 1, borderColor: C.border,
+  },
+  tab: { flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: "center" },
+  tabActive: { backgroundColor: C.card },
+  tabText: { fontSize: 14, fontWeight: "600", color: C.muted },
+  tabTextActive: { color: C.white },
+
   loginCard: {
     backgroundColor: C.cardDark, borderRadius: 20,
-    padding: 24, marginTop: 40, borderWidth: 1, borderColor: C.border,
+    padding: 24, marginTop: 16, borderWidth: 1, borderColor: C.border,
   },
   loginHeading: { fontSize: 22, fontWeight: "700", color: C.white, marginBottom: 6 },
   loginSub: { fontSize: 13, color: C.muted, marginBottom: 24 },
@@ -431,4 +631,27 @@ const styles = StyleSheet.create({
   historyStats: { flexDirection: "row", alignItems: "baseline" },
   historyVal: { fontSize: 15, fontWeight: "700" },
   historyLabel: { color: C.muted, fontSize: 12 },
+
+  sectionLabel: { color: C.muted, fontSize: 11, fontWeight: "600", letterSpacing: 0.5, marginBottom: 6 },
+  editBtn: {
+    backgroundColor: C.card, borderRadius: 10, borderWidth: 1,
+    borderColor: C.border, padding: 12, alignItems: "center",
+  },
+  editBtnText: { color: C.white, fontSize: 14, fontWeight: "600" },
+  cancelBtn: {
+    borderRadius: 10, borderWidth: 1, borderColor: C.border,
+    padding: 12, paddingHorizontal: 20, alignItems: "center", justifyContent: "center",
+  },
+  cancelBtnText: { color: C.muted, fontSize: 14 },
+
+  tabBar: {
+    flexDirection: "row", backgroundColor: C.cardDark,
+    borderTopWidth: 1, borderTopColor: C.border,
+    paddingBottom: 28, paddingTop: 12,
+  },
+  tabBarItem: { flex: 1, alignItems: "center", gap: 4 },
+  tabBarDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: "transparent" },
+  tabBarDotActive: { backgroundColor: C.blue },
+  tabBarLabel: { fontSize: 12, fontWeight: "600", color: C.muted },
+  tabBarLabelActive: { color: C.white },
 });

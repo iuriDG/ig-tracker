@@ -6,25 +6,50 @@ import type { User } from "../types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
+type Mode = "signin" | "signup";
+
 export default function LoginScreen({ onLogin }: { onLogin: (u: User) => void }) {
+  const [mode, setMode] = useState<Mode>("signin");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [igId, setIgId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleLogin(e: React.FormEvent) {
+  function reset() {
+    setUsername("");
+    setPassword("");
+    setConfirm("");
+    setIgId("");
+    setError(null);
+  }
+
+  function switchMode(m: Mode) {
+    setMode(m);
+    reset();
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!username.trim() || !password.trim()) return;
+    if (mode === "signup" && password !== confirm) {
+      setError("Passwords don't match");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BASE_URL}/login`, {
+      const body: Record<string, string> = { username: username.trim(), password: password.trim() };
+      if (mode === "signup" && igId.trim()) body.instagram_user_id = igId.trim();
+
+      const res = await fetch(`${BASE_URL}/${mode === "signin" ? "login" : "signup"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
-      if (!res.ok) setError(json.error ?? "Login failed");
+      if (!res.ok) setError(json.error ?? "Something went wrong");
       else onLogin(json.user);
     } catch (e: any) {
       setError(e.message);
@@ -45,32 +70,48 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: User) => void })
       }}
     >
       <div style={{ width: "100%", maxWidth: 420 }}>
-        <h1
-          style={{
-            fontSize: 42,
-            fontWeight: 800,
-            color: C.white,
-            letterSpacing: -1,
-            margin: 0,
-          }}
-        >
+        <h1 style={{ fontSize: 42, fontWeight: 800, color: C.white, letterSpacing: -1, margin: 0 }}>
           adnova
         </h1>
-        <p
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: C.muted,
-            letterSpacing: 2,
-            marginTop: 4,
-            marginBottom: 40,
-          }}
-        >
+        <p style={{ fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 2, marginTop: 4, marginBottom: 40 }}>
           SMARTER INSIGHTS · FASTER GROWTH
         </p>
 
+        {/* Tab toggle */}
+        <div
+          style={{
+            display: "flex",
+            background: C.cardDark,
+            borderRadius: 12,
+            padding: 4,
+            marginBottom: 16,
+            border: `1px solid ${C.border}`,
+          }}
+        >
+          {(["signin", "signup"] as Mode[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => switchMode(m)}
+              style={{
+                flex: 1,
+                padding: "10px 0",
+                border: "none",
+                borderRadius: 9,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                background: mode === m ? C.card : "transparent",
+                color: mode === m ? C.white : C.muted,
+                transition: "all 0.15s",
+              }}
+            >
+              {m === "signin" ? "Sign In" : "Sign Up"}
+            </button>
+          ))}
+        </div>
+
         <form
-          onSubmit={handleLogin}
+          onSubmit={handleSubmit}
           style={{
             background: C.cardDark,
             borderRadius: 20,
@@ -78,13 +119,11 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: User) => void })
             border: `1px solid ${C.border}`,
           }}
         >
-          <h2
-            style={{ fontSize: 22, fontWeight: 700, color: C.white, margin: "0 0 6px" }}
-          >
-            Welcome back
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.white, margin: "0 0 6px" }}>
+            {mode === "signin" ? "Welcome back" : "Create account"}
           </h2>
           <p style={{ fontSize: 13, color: C.muted, margin: "0 0 24px" }}>
-            Enter your credentials to continue
+            {mode === "signin" ? "Enter your credentials to continue" : "Fill in your details to get started"}
           </p>
 
           <input
@@ -95,6 +134,18 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: User) => void })
             autoCapitalize="none"
             autoCorrect="off"
           />
+
+          {mode === "signup" && (
+            <input
+              style={inputStyle(false)}
+              placeholder="instagram user id (optional)"
+              value={igId}
+              onChange={(e) => setIgId(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+          )}
+
           <input
             style={inputStyle(!!error)}
             type="password"
@@ -103,9 +154,17 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: User) => void })
             onChange={(e) => { setPassword(e.target.value); setError(null); }}
           />
 
-          {error && (
-            <p style={{ color: C.red, fontSize: 13, margin: "0 0 12px" }}>{error}</p>
+          {mode === "signup" && (
+            <input
+              style={inputStyle(!!error)}
+              type="password"
+              placeholder="confirm password"
+              value={confirm}
+              onChange={(e) => { setConfirm(e.target.value); setError(null); }}
+            />
           )}
+
+          {error && <p style={{ color: C.red, fontSize: 13, margin: "0 0 12px" }}>{error}</p>}
 
           <button
             type="submit"
@@ -124,7 +183,7 @@ export default function LoginScreen({ onLogin }: { onLogin: (u: User) => void })
               marginTop: 4,
             }}
           >
-            {loading ? "Logging in…" : "Log In"}
+            {loading ? "Please wait…" : mode === "signin" ? "Log In" : "Create Account"}
           </button>
         </form>
       </div>

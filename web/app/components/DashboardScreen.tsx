@@ -16,12 +16,25 @@ function formatDate(iso: string) {
   });
 }
 
+function Delta({ value }: { value: number | null }) {
+  if (value === null) return <span style={{ color: C.muted, fontSize: 11 }}>—</span>;
+  if (value === 0) return <span style={{ color: C.muted, fontSize: 11 }}>±0</span>;
+  const color = value > 0 ? C.green : "#f87171";
+  return (
+    <span style={{ color, fontSize: 11, fontWeight: 600 }}>
+      {value > 0 ? "+" : ""}{value.toLocaleString()}
+    </span>
+  );
+}
+
 export default function DashboardScreen({
   user,
   onLogout,
+  hideHeader = false,
 }: {
   user: User;
   onLogout: () => void;
+  hideHeader?: boolean;
 }) {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,52 +64,28 @@ export default function DashboardScreen({
     <div style={{ minHeight: "100vh", background: C.bg }}>
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "48px 24px 60px" }}>
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 32,
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontSize: 36,
-                fontWeight: 800,
-                color: C.white,
-                letterSpacing: -0.5,
-                margin: 0,
-              }}
-            >
-              adnova
-            </h1>
-            <p
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: C.muted,
-                letterSpacing: 1.5,
-                marginTop: 4,
-              }}
-            >
-              SMARTER INSIGHTS · FASTER GROWTH
-            </p>
-          </div>
-          <button
-            onClick={onLogout}
+        {!hideHeader && (
+          <div
             style={{
-              background: "none",
-              border: "none",
-              color: C.muted,
-              fontSize: 14,
-              cursor: "pointer",
-              marginTop: 8,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: 32,
             }}
           >
-            Log out
-          </button>
-        </div>
+            <div>
+              <h1 style={{ fontSize: 36, fontWeight: 800, color: C.white, letterSpacing: -0.5, margin: 0 }}>
+                adnova
+              </h1>
+              <p style={{ fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: 1.5, marginTop: 4 }}>
+                SMARTER INSIGHTS · FASTER GROWTH
+              </p>
+            </div>
+            <button onClick={onLogout} style={{ background: "none", border: "none", color: C.muted, fontSize: 14, cursor: "pointer", marginTop: 8 }}>
+              Log out
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div style={{ textAlign: "center", paddingTop: 80, color: C.muted }}>
@@ -214,89 +203,80 @@ export default function DashboardScreen({
             {/* Snapshot history */}
             {snapshots.length > 0 && (
               <div style={{ ...card, marginTop: 16 }}>
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: C.white,
-                    marginBottom: 16,
-                  }}
-                >
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.white, marginBottom: 4 }}>
                   Snapshot History
                 </div>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                      {["Date", "Followers", "Following", "Posts"].map((h) => (
-                        <th
-                          key={h}
-                          style={{
-                            textAlign: "left",
-                            color: C.muted,
-                            fontSize: 12,
-                            fontWeight: 600,
-                            paddingBottom: 10,
-                          }}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...snapshots].reverse().map((s, i) => (
-                      <tr
-                        key={s.id}
-                        style={{
-                          borderBottom:
-                            i < snapshots.length - 1
-                              ? `1px solid ${C.border}`
-                              : "none",
-                        }}
-                      >
-                        <td
-                          style={{
-                            color: C.muted,
-                            fontSize: 13,
-                            padding: "10px 0",
-                          }}
-                        >
-                          {formatDate(s.taken_at)}
-                        </td>
-                        <td
-                          style={{
-                            color: C.blue,
-                            fontWeight: 700,
-                            fontSize: 14,
-                            padding: "10px 0",
-                          }}
-                        >
-                          {s.followers_count.toLocaleString()}
-                        </td>
-                        <td
-                          style={{
-                            color: C.purple,
-                            fontWeight: 700,
-                            fontSize: 14,
-                            padding: "10px 0",
-                          }}
-                        >
-                          {s.following_count.toLocaleString()}
-                        </td>
-                        <td
-                          style={{
-                            color: C.lavender,
-                            fontWeight: 700,
-                            fontSize: 14,
-                            padding: "10px 0",
-                          }}
-                        >
-                          {s.posts_count.toLocaleString()}
-                        </td>
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 16 }}>
+                  {snapshots.length} snapshot{snapshots.length !== 1 ? "s" : ""} · most recent first
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480 }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                        {[
+                          { label: "Date", color: C.muted },
+                          { label: "Followers", color: C.blue },
+                          { label: "Following", color: C.purple },
+                          { label: "Posts", color: C.lavender },
+                        ].map(({ label, color }) => (
+                          <th
+                            key={label}
+                            style={{
+                              textAlign: "left",
+                              color,
+                              fontSize: 12,
+                              fontWeight: 600,
+                              paddingBottom: 10,
+                              paddingRight: 16,
+                            }}
+                          >
+                            {label}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {[...snapshots].reverse().map((s, i, arr) => {
+                        const older = arr[i + 1];
+                        const df = older != null ? s.followers_count - older.followers_count : null;
+                        const dfo = older != null ? s.following_count - older.following_count : null;
+                        const dp = older != null ? s.posts_count - older.posts_count : null;
+                        return (
+                          <tr
+                            key={s.id}
+                            style={{
+                              borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : "none",
+                            }}
+                          >
+                            <td style={{ padding: "12px 16px 12px 0", minWidth: 110 }}>
+                              <div style={{ color: C.white, fontSize: 13, fontWeight: 500 }}>
+                                {formatDate(s.taken_at)}
+                              </div>
+                            </td>
+                            <td style={{ padding: "12px 16px 12px 0" }}>
+                              <div style={{ color: C.blue, fontWeight: 700, fontSize: 15 }}>
+                                {s.followers_count.toLocaleString()}
+                              </div>
+                              <Delta value={df} />
+                            </td>
+                            <td style={{ padding: "12px 16px 12px 0" }}>
+                              <div style={{ color: C.purple, fontWeight: 700, fontSize: 15 }}>
+                                {s.following_count.toLocaleString()}
+                              </div>
+                              <Delta value={dfo} />
+                            </td>
+                            <td style={{ padding: "12px 0" }}>
+                              <div style={{ color: C.lavender, fontWeight: 700, fontSize: 15 }}>
+                                {s.posts_count.toLocaleString()}
+                              </div>
+                              <Delta value={dp} />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </>
