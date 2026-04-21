@@ -35,7 +35,21 @@ npx expo start
 
 **iOS Simulator (macOS):** press `i` after the dev server starts. `BASE_URL` in `App.tsx` stays as `http://localhost:3000`.
 
-**Android Emulator (Windows/macOS):** install Android Studio, create a virtual device, then press `a`. `BASE_URL` in `App.tsx` must be `http://10.0.2.2:3000`.
+**Android Emulator (Windows/macOS):**
+
+1. Download and install [Android Studio](https://developer.android.com/studio)
+2. Open Android Studio → **More Actions → Virtual Device Manager**
+3. Click **Create Device** → pick **Pixel 6** → Next
+4. Download **API 34 (Android 14)** if not already downloaded → Next → Finish
+5. Click the **▶ play button** to start the emulator — wait until the home screen is fully visible
+6. Run the dev server:
+
+```bash
+cd mobile
+npx expo start --android
+```
+
+`BASE_URL` in `App.tsx` must be `http://10.0.2.2:3000` (Android emulator's alias for the host machine).
 
 ### Backend `.env`
 
