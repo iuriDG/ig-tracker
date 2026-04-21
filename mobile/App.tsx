@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop } from "react-native-svg";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "http://10.0.2.2:3000";
 
 const C = {
   bg: "#07060b",

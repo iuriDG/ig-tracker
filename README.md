@@ -25,17 +25,30 @@ docker compose up --build
 
 ### Mobile
 
-Mobile runs natively (not in Docker) because Expo needs direct access to your machine's network to reach a simulator or physical device.
+Mobile runs natively (not in Docker) because Expo needs direct access to your machine's network to reach a simulator or device.
 
 ```bash
 cd mobile
 npm install
-npx expo start --clear
+npx expo start
 ```
 
-**iOS Simulator:** press `i` after the dev server starts.
+**iOS Simulator (macOS):** press `i` after the dev server starts. `BASE_URL` in `App.tsx` stays as `http://localhost:3000`.
 
-**Physical device:** update `BASE_URL` in `mobile/App.tsx` to your machine's local IP (e.g. `http://192.168.x.x:3000`), then scan the QR code with Expo Go.
+**Android Emulator (Windows/macOS):** install Android Studio, create a virtual device, then press `a`. `BASE_URL` in `App.tsx` must be `http://10.0.2.2:3000`.
+
+### Backend `.env`
+
+Create `backend/.env` before running Docker:
+
+```
+SUPABASE_URL=https://<project-id>.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET=sb_secret_...
+PORT=3000
+```
+
+Find these in your Supabase project under **Settings → API**.
 
 ## API Endpoints
 
