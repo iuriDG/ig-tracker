@@ -4,43 +4,28 @@ Instagram stats tracker — Next.js web app + React Native (Expo) mobile app, ba
 
 ## Running
 
-### 1. Backend
+### Backend + Web (Docker)
 
-Start the API server with Docker:
-
-```bash
-docker compose up backend
-```
-
-The backend will be available at `http://localhost:3000`.
-
-### 2. Web App
-
-In a separate terminal:
+Start both with a single command:
 
 ```bash
-cd web
-npm install
+docker compose up
 ```
 
-Create the environment file:
+| Service | URL |
+|---------|-----|
+| Backend API | http://localhost:3000 |
+| Web app | http://localhost:3001 |
+
+To rebuild after code changes:
 
 ```bash
-echo "NEXT_PUBLIC_API_URL=http://localhost:3000" > .env.local
+docker compose up --build
 ```
 
-Then start the dev server:
+### Mobile
 
-```bash
-npm run dev
-```
-
-Open [http://localhost:3001](http://localhost:3001) in your browser.  
-(Next.js uses port 3001 automatically if 3000 is already taken by the backend.)
-
-### 3. Mobile (iOS Simulator)
-
-In a separate terminal:
+Mobile runs natively (not in Docker) because Expo needs direct access to your machine's network to reach a simulator or physical device.
 
 ```bash
 cd mobile
@@ -48,12 +33,9 @@ npm install
 npx expo start --clear
 ```
 
-Press `i` to open the iOS simulator.
+**iOS Simulator:** press `i` after the dev server starts.
 
-### Mobile (Physical Device)
-
-1. Update `BASE_URL` in `mobile/App.tsx` to your machine's local IP (e.g. `http://192.168.x.x:3000`)
-2. Run `npx expo start --clear` and scan the QR code with Expo Go
+**Physical device:** update `BASE_URL` in `mobile/App.tsx` to your machine's local IP (e.g. `http://192.168.x.x:3000`), then scan the QR code with Expo Go.
 
 ## API Endpoints
 
