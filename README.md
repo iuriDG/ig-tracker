@@ -1,6 +1,6 @@
 # ig-tracker
 
-Instagram stats tracker — Next.js web app + React Native (Expo) mobile app, backed by an Express API and Supabase.
+Instagram stats tracker - Next.js web app + React Native (Expo) mobile app, backed by an Express API and Supabase.
 
 ## Running
 
@@ -50,17 +50,6 @@ npx expo start --android
 ```
 
 `BASE_URL` in `App.tsx` must be `http://10.0.2.2:3000` (Android emulator's alias for the host machine).
-
-### Backend `.env`
-
-Create `backend/.env` before running Docker:
-
-```
-SUPABASE_URL=https://<project-id>.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-SUPABASE_SECRET=sb_secret_...
-PORT=3000
-```
 
 Find these in your Supabase project under **Settings → API**.
 
