@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/" alt="Your project description" width="400">
+  <img src="images/ig-tracker.png" alt="Your project description" width="400">
 </p>
 # ig-tracker
 
