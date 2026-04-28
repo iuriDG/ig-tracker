@@ -1,3 +1,6 @@
+vp align="center">
+  <img src="images/ig-tracker.png" alt="Your project description" width="400">
+</p>
 # ig-tracker
 
 Instagram stats tracker - Next.js web app + React Native (Expo) mobile app, backed by an Express API and Supabase.
